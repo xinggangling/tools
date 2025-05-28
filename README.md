@@ -15,3 +15,5 @@
 ## math
 
 - 数学公式可视化辅助学习
+
+![image](./assets/image.png)
