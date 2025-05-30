@@ -1,0 +1,6 @@
+# EditorConfig helps maintain consistent coding styles
+root = true
+
+[*]
+indent_style = space
+indent_size = 2
