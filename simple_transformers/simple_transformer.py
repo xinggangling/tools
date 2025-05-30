@@ -83,54 +83,74 @@ class MultiHeadAttention(nn.Module):
         output = output.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model)
         return self.W_o(output)
 
-class SimpleTransformer(nn.Module):
-    """
-    简单的Transformer模型
-    包含位置编码、多头注意力、层归一化和前馈网络
-    """
-    def __init__(self, d_model=512, num_heads=8, max_len=5000):
-        super(SimpleTransformer, self).__init__()
+class DigitTransformer(nn.Module):
+    def __init__(self, d_model=64, num_heads=4):
+        super(DigitTransformer, self).__init__()
+        # 输入处理层：将28x28的图像转换为序列
+        self.input_projection = nn.Linear(784, d_model)
+        
         # 位置编码层
-        self.positional_encoding = PositionalEncoding(d_model, max_len)
+        self.positional_encoding = PositionalEncoding(d_model, max_len=784)
+        
         # 多头注意力层
         self.attention = MultiHeadAttention(d_model, num_heads)
+        
         # 层归一化
         self.norm1 = nn.LayerNorm(d_model)
         self.norm2 = nn.LayerNorm(d_model)
+        
         # 前馈神经网络
         self.feed_forward = nn.Sequential(
-            nn.Linear(d_model, d_model * 4),  # 扩展维度
-            nn.ReLU(),  # 激活函数
-            nn.Linear(d_model * 4, d_model)  # 压缩维度
+            nn.Linear(d_model, d_model * 4),
+            nn.ReLU(),
+            nn.Linear(d_model * 4, d_model)
         )
         
-    def forward(self, x, mask=None):
+        # 输出层：2分类（1和2）
+        self.output_layer = nn.Linear(d_model, 2)
+        
+    def forward(self, x):
+        # 输入形状: [batch_size, 784]
+        batch_size = x.size(0)
+        
+        # 将输入重塑为序列
+        x = x.view(batch_size, -1, 784)  # [batch_size, 1, 784]
+        
+        # 投影到模型维度
+        x = self.input_projection(x)  # [batch_size, 1, d_model]
+        
         # 添加位置编码
         x = self.positional_encoding(x)
         
-        # 多头注意力 + 残差连接 + 层归一化
-        attention_output = self.attention(x, x, x, mask)
-        x = self.norm1(x + attention_output)  # 残差连接后归一化
+        # 多头注意力
+        attention_output = self.attention(x, x, x)
+        x = self.norm1(x + attention_output)
         
-        # 前馈网络 + 残差连接 + 层归一化
+        # 前馈网络
         ff_output = self.feed_forward(x)
-        x = self.norm2(x + ff_output)  # 残差连接后归一化
+        x = self.norm2(x + ff_output)
         
-        return x
+        # 输出层
+        x = x.view(batch_size, -1)  # 展平
+        output = self.output_layer(x)
+        
+        return output
 
 # 使用示例
 if __name__ == "__main__":
-    # 创建一个简单的transformer模型
-    # d_model=512: 模型维度为512
-    # num_heads=8: 使用8个注意力头
-    model = SimpleTransformer(d_model=512, num_heads=8)
+    # 创建模型
+    model = DigitTransformer(d_model=64, num_heads=4)
     
-    # 创建一个示例输入
-    batch_size = 2  # 批次大小为2
-    seq_length = 10  # 序列长度为10
-    x = torch.randn(batch_size, seq_length, 512)  # 随机生成输入张量
+    # 创建示例输入（模拟MNIST图像）
+    batch_size = 2
+    x = torch.randn(batch_size, 784)  # 28x28=784
     
     # 前向传播
     output = model(x)
-    print(f"输入形状: {x.shape}")  # 输出输入张量的形状
-    print(f"输出形状: {output.shape}")  # 输出输出张量的形状 
+    print(f"输入形状: {x.shape}")
+    print(f"输出形状: {output.shape}")
+    print(f"输出示例: {output[0]}")
+    
+    # 计算预测结果
+    predictions = torch.softmax(output, dim=1)
+    print(f"预测概率: {predictions[0]}") 
