@@ -8,8 +8,9 @@
 .
 ├── simple_transformer.py    # Transformer模型的核心实现
 ├── train_digit_transformer.py  # 训练脚本
-├── requirements.txt         # 项目依赖
-└── README.md               # 项目文档
+├── predict.py              # 预测脚本
+├── requirements.txt        # 项目依赖
+└── README.md              # 项目文档
 ```
 
 ## 核心组件说明
@@ -66,54 +67,72 @@ class DigitTransformer(nn.Module):
 - 注意力计算：使用多头注意力机制
 - 输出层：进行二分类（1 和 2）
 
-## 训练流程
+## 使用指南
 
-### 1. 数据准备
+### 1. 环境配置
 
-```python
-def get_mnist_data():
-    # 加载MNIST数据集
-    # 只选择数字1和2
-    # 进行数据预处理和标准化
-```
-
-### 2. 模型训练
-
-```python
-def train_model(model, train_loader, criterion, optimizer, device):
-    # 训练一个epoch
-    # 计算损失和准确率
-    # 更新模型参数
-```
-
-### 3. 模型评估
-
-```python
-def evaluate_model(model, test_loader, device):
-    # 在测试集上评估模型
-    # 计算准确率
-```
-
-### 4. 训练可视化
-
-```python
-def plot_training_history(train_losses, train_accs, test_accs):
-    # 绘制训练损失曲线
-    # 绘制训练和测试准确率曲线
-```
-
-## 使用方法
-
-1. 安装依赖：
+安装所需依赖：
 
 ```bash
 pip install -r requirements.txt
 ```
 
-2. 运行训练：
+### 2. 模型训练
+
+运行训练脚本：
 
 ```bash
 python train_digit_transformer.py
+```
+
+训练过程将：
+
+- 自动下载 MNIST 数据集
+- 只使用数字 1 和 2 的样本
+- 训练 10 个 epoch
+- 保存训练好的模型
+- 生成训练过程可视化图表
+
+### 3. 模型预测
+
+1. 准备测试图像：
+
+   - 图像应该是手写数字 1 或 2
+   - 支持常见图像格式（PNG、JPG 等）
+   - 图像会被自动转换为 28x28 的灰度图
+
+2. 运行预测：
+
+```bash
+python predict.py
+```
+
+预测脚本将：
+
+- 加载训练好的模型
+- 预处理输入图像
+- 输出预测结果和置信度
+
+示例输出：
+
+```
+使用设备: cpu
+预测结果: 数字 1
+置信度: 95.23%
+```
+
+## 模型架构
+
+```mermaid
+graph TD
+    A[输入图像 28x28] --> B[展平为序列]
+    B --> C[位置编码]
+    C --> D[多头注意力]
+    D --> E[层归一化]
+    E --> F[前馈网络]
+    F --> G[层归一化]
+    G --> H[输出层]
+    H --> I[预测结果]
 ```
 
 ## 主要参数说明
@@ -143,22 +162,12 @@ python train_digit_transformer.py
    - 使用 ReLU 激活函数
 
 3. 训练过程：
+
    - 使用 Adam 优化器
    - 使用交叉熵损失函数
    - 支持 GPU 训练（如果可用）
 
-```mermaid
-输入序列
-    ↓
-位置编码层 (PositionalEncoding)
-    ↓
-多头注意力层 (MultiHeadAttention)
-    ↓
-层归一化 (LayerNorm) + 残差连接
-    ↓
-前馈神经网络 (Feed Forward)
-    ↓
-层归一化 (LayerNorm) + 残差连接
-    ↓
-输出序列
-```
+4. 预测要求：
+   - 输入图像必须是手写数字 1 或 2
+   - 图像会被自动调整为 28x28 大小
+   - 支持 CPU 和 GPU 预测
