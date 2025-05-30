@@ -5,6 +5,9 @@ from torchvision import datasets, transforms
 import numpy as np
 from simple_transformer import DigitTransformer
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['STHeiti', 'PingFang SC', 'Arial Unicode MS']  # 适配macOS常见中文字体
+matplotlib.rcParams['axes.unicode_minus'] = False
 
 def get_mnist_data():
     """加载MNIST数据，只选择数字1和2"""
