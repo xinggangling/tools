@@ -31,40 +31,9 @@
 
 ## 示例代码
 
-```python
-import torch
-import torch.nn as nn
-import matplotlib.pyplot as plt
-
-# 示例：线性回归模型
-class LinearModel(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.linear = nn.Linear(1, 1)
-
-    def forward(self, x):
-        return self.linear(x)
-
-# 训练代码
-model = LinearModel()
-criterion = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
-
-# 训练循环
-for epoch in range(100):
-    optimizer.zero_grad()
-    outputs = model(x)
-    loss = criterion(outputs, y)
-    loss.backward()
-    optimizer.step()
-
-# 可视化训练过程
-plt.plot(losses)
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.title('Training Loss')
-plt.show()
-```
+- [线性回归模型](linear_regression.py)
+- [K-means 聚类算法](unsupervised_learning.py)
+- [图像分割示例](image_segmentation.py)
 
 ## 学习资源
 
