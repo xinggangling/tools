@@ -15,6 +15,12 @@
     [0.2, 0.3, ..., 0.785]   # 第二张图片的像素值
   ]
   ```
+- 代码实现：
+  ```python
+  # 假设我们有一个MNIST数据加载器
+  batch_size = 2
+  x = torch.randn(batch_size, 784)  # 模拟MNIST图像数据
+  ```
 
 ## 2. 输入重塑
 
@@ -29,6 +35,11 @@
     [[0.1, 0.2, ..., 0.784]],  # 第一张图片的像素序列
     [[0.2, 0.3, ..., 0.785]]   # 第二张图片的像素序列
   ]
+  ```
+- 代码实现：
+  ```python
+  # 将输入重塑为序列形式
+  x = x.view(batch_size, 1, 784)  # [batch_size, 1, 784]
   ```
 
 ## 3. 输入投影
@@ -45,6 +56,16 @@
     [[0.2, 0.3, ..., 0.64]]   # 第二张图片的64维特征表示
   ]
   ```
+- 代码实现：
+
+  ```python
+  # 定义输入投影层
+  d_model = 64
+  input_projection = nn.Linear(784, d_model)
+
+  # 应用投影
+  x = input_projection(x)  # [batch_size, 1, d_model]
+  ```
 
 ## 4. 位置编码
 
@@ -60,6 +81,27 @@
     [[0.1+pe_0, 0.2+pe_1, ..., 0.64+pe_63]],  # 第一张图片的特征加上位置信息
     [[0.2+pe_0, 0.3+pe_1, ..., 0.64+pe_63]]   # 第二张图片的特征加上位置信息
   ]
+  ```
+- 代码实现：
+
+  ```python
+  class PositionalEncoding(nn.Module):
+      def __init__(self, d_model, max_len=5000):
+          super().__init__()
+          pe = torch.zeros(max_len, d_model)
+          position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
+          div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
+          pe[:, 0::2] = torch.sin(position * div_term)
+          pe[:, 1::2] = torch.cos(position * div_term)
+          pe = pe.unsqueeze(0)
+          self.register_buffer('pe', pe)
+
+      def forward(self, x):
+          return x + self.pe[:, :x.size(1)]
+
+  # 应用位置编码
+  pos_encoder = PositionalEncoding(d_model)
+  x = pos_encoder(x)  # [batch_size, 1, d_model]
   ```
 
 ## 5. 多头注意力
@@ -83,6 +125,44 @@
     [[0.4, 0.5, ..., 0.64]]   # 第二张图片的注意力加权特征
   ]
   ```
+- 代码实现：
+
+  ```python
+  class MultiHeadAttention(nn.Module):
+      def __init__(self, d_model, num_heads):
+          super().__init__()
+          self.num_heads = num_heads
+          self.d_k = d_model // num_heads
+
+          self.W_q = nn.Linear(d_model, d_model)
+          self.W_k = nn.Linear(d_model, d_model)
+          self.W_v = nn.Linear(d_model, d_model)
+          self.W_o = nn.Linear(d_model, d_model)
+
+      def forward(self, Q, K, V, mask=None):
+          batch_size = Q.size(0)
+
+          # 线性变换
+          Q = self.W_q(Q).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
+          K = self.W_k(K).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
+          V = self.W_v(V).view(batch_size, -1, self.num_heads, self.d_k).transpose(1, 2)
+
+          # 计算注意力
+          scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(self.d_k)
+          if mask is not None:
+              scores = scores.masked_fill(mask == 0, -1e9)
+          attention_weights = torch.softmax(scores, dim=-1)
+          output = torch.matmul(attention_weights, V)
+
+          # 重塑并应用输出变换
+          output = output.transpose(1, 2).contiguous().view(batch_size, -1, self.d_model)
+          return self.W_o(output)
+
+  # 应用多头注意力
+  num_heads = 4
+  attention = MultiHeadAttention(d_model, num_heads)
+  x = attention(x, x, x)  # [batch_size, 1, d_model]
+  ```
 
 ## 6. 残差连接和层归一化
 
@@ -91,6 +171,34 @@
 - 数据含义：
   - 残差连接：保留原始特征信息
   - 层归一化：将特征值标准化到合适的范围
+- 数据结构：
+  1. 残差连接前：
+     ```
+     [
+       [[0.3, 0.4, ..., 0.64]],  # 第一张图片的注意力输出
+       [[0.4, 0.5, ..., 0.64]]   # 第二张图片的注意力输出
+     ]
+     ```
+  2. 残差连接（与原始输入相加）：
+     ```
+     [
+       [[0.3+0.1, 0.4+0.2, ..., 0.64+0.64]],  # 第一张图片的残差连接结果
+       [[0.4+0.2, 0.5+0.3, ..., 0.64+0.64]]   # 第二张图片的残差连接结果
+     ]
+     ```
+  3. 层归一化后：
+     ```
+     [
+       [[0.2, 0.3, ..., 0.5]],  # 第一张图片的归一化特征
+       [[0.3, 0.4, ..., 0.6]]   # 第二张图片的归一化特征
+     ]
+     ```
+- 代码实现：
+  ```python
+  # 残差连接和层归一化
+  norm1 = nn.LayerNorm(d_model)
+  x = norm1(x + x)  # 残差连接后归一化
+  ```
 
 ## 7. 前馈神经网络
 
@@ -102,6 +210,45 @@
      - 引入非线性，去除负值
   3. 第二层：`[batch_size, 1, d_model*4]` → `[batch_size, 1, d_model]`
      - 压缩回原始维度
+- 数据结构：
+  1. 输入数据（第一层前）：
+     ```
+     [
+       [[0.2, 0.3, ..., 0.5]],  # 第一张图片的特征
+       [[0.3, 0.4, ..., 0.6]]   # 第二张图片的特征
+     ]
+     ```
+  2. 第一层线性变换后（扩展维度）：
+     ```
+     [
+       [[0.1, 0.2, ..., 0.256]],  # 第一张图片的扩展特征 (d_model*4=256)
+       [[0.2, 0.3, ..., 0.256]]   # 第二张图片的扩展特征
+     ]
+     ```
+  3. ReLU 激活后：
+     ```
+     [
+       [[0.1, 0.2, ..., 0.256]],  # 第一张图片的激活特征（负值变为0）
+       [[0.2, 0.3, ..., 0.256]]   # 第二张图片的激活特征
+     ]
+     ```
+  4. 第二层线性变换后（压缩维度）：
+     ```
+     [
+       [[0.3, 0.4, ..., 0.64]],  # 第一张图片的压缩特征
+       [[0.4, 0.5, ..., 0.64]]   # 第二张图片的压缩特征
+     ]
+     ```
+- 代码实现：
+  ```python
+  # 前馈神经网络
+  feed_forward = nn.Sequential(
+      nn.Linear(d_model, d_model * 4),
+      nn.ReLU(),
+      nn.Linear(d_model * 4, d_model)
+  )
+  x = feed_forward(x)  # [batch_size, 1, d_model]
+  ```
 
 ## 8. 输出层
 
@@ -119,6 +266,13 @@
     [0.2, 0.8]   # 第二张图片的原始分数：更可能属于类别2
   ]
   ```
+- 代码实现：
+  ```python
+  # 输出层
+  x = x.view(batch_size, -1)  # 展平
+  output_layer = nn.Linear(d_model, 2)
+  x = output_layer(x)  # [batch_size, 2]
+  ```
 
 ## 9. Softmax 激活
 
@@ -134,4 +288,9 @@
     [0.67, 0.33],  # 第一张图片：67%概率是类别1，33%概率是类别2
     [0.25, 0.75]   # 第二张图片：25%概率是类别1，75%概率是类别2
   ]
+  ```
+- 代码实现：
+  ```python
+  # Softmax激活
+  predictions = torch.softmax(x, dim=1)  # [batch_size, 2]
   ```
