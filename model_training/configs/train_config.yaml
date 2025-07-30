@@ -1,0 +1,111 @@
+# 翻译模型训练配置
+# 针对Mac M4 + 32GB内存优化
+
+# 数据配置
+data:
+  # 数据集类型: "sample", "ted_talks", "europarl", "custom"
+  dataset_type: "sample"
+
+  # 自定义数据文件路径（当dataset_type为"custom"时使用）
+  custom_data_path: "data/custom/translation_data.csv"
+
+  # 语言对
+  language_pair: "en-zh"
+
+  # 最大样本数（None表示使用全部数据）
+  max_samples: 1000
+
+  # 最大序列长度
+  max_length: 128
+
+  # 词汇表配置
+  vocab:
+    min_freq: 2
+    max_vocab_size: 10000
+
+  # 数据分割比例
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+
+# 模型配置
+model:
+  # 隐藏层维度
+  d_model: 256
+
+  # 编码器和解码器层数
+  nlayers: 2
+
+  # 注意力头数
+  nhead: 2
+
+  # 前馈网络维度
+  dim_feedforward: 1024
+
+  # Dropout率
+  dropout: 0.1
+
+# 训练配置
+training:
+  # 训练轮数
+  num_epochs: 10
+
+  # 批次大小
+  batch_size: 16
+
+  # 学习率
+  learning_rate: 5e-4
+
+  # 权重衰减
+  weight_decay: 1e-4
+
+  # 梯度累积步数
+  gradient_accumulation_steps: 4
+
+  # 最大梯度范数
+  max_grad_norm: 1.0
+
+  # 是否使用混合精度训练
+  use_amp: true
+
+  # 随机种子
+  random_seed: 42
+
+# 日志和保存配置
+logging:
+  # 日志间隔（步数）
+  log_interval: 50
+
+  # 保存间隔（步数）
+  save_interval: 500
+
+  # 验证间隔（步数）
+  eval_interval: 200
+
+  # 输出目录
+  output_dir: "checkpoints"
+
+  # 是否使用wandb
+  use_wandb: false
+
+  # wandb项目名称
+  wandb_project: "translation-model"
+
+# 设备配置
+device:
+  # 是否强制使用CPU
+  force_cpu: false
+
+  # 工作进程数
+  num_workers: 0
+
+# 实验配置
+experiment:
+  # 实验名称
+  name: "translation_model_v1"
+
+  # 是否从检查点恢复
+  resume_from_checkpoint: false
+
+  # 检查点路径
+  checkpoint_path: ""

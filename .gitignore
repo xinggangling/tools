@@ -1,5 +1,107 @@
+# 数据文件
 my_1
 my_2
 processed_1
 processed_2
-data
+# data
+
+# Python 相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# IDE 相关
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 模型文件
+*.pth
+*.pt
+*.pkl
+*.h5
+*.hdf5
+*.onnx
+*.pb
+*.tflite
+*.model
+*.weights
+
+# 日志文件
+*.log
+logs/
+log/
+
+# 临时文件
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 配置文件（包含敏感信息）
+.env
+.env.local
+.env.production
+config.ini
+secrets.json
+
+# 大型媒体文件（可选，根据项目需要）
+# *.mp4
+# *.avi
+# *.mov
+# *.wmv
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 备份文件
+*.bak
+*.backup
+*_backup.*
+
+# 测试覆盖率
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# 其他
+*.pid
+*.seed
+*.pid.lock
